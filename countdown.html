@@ -35,10 +35,12 @@
 
       // Calculate remaining time
       var timeDiff = targetDate - currentDate;
-      seconds = Math.floor(timeDiff / 1000) % 60;
-      minutes = Math.floor(timeDiff / (1000 * 60)) % 60;
-      hours = Math.floor(timeDiff / (1000 * 60 * 60)) % 24;
-      days += Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+      if (timeDiff >= 0) {
+        seconds = Math.floor(timeDiff / 1000) % 60;
+        minutes = Math.floor(timeDiff / (1000 * 60)) % 60;
+        hours = Math.floor(timeDiff / (1000 * 60 * 60)) % 24;
+        days += Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+      }
 
       return {
         days: days,
@@ -53,7 +55,11 @@
       var countdownElement = document.getElementById('countdown');
       var countdown = calculateCountdown();
 
-      countdownElement.innerHTML = countdown.days + ' days ' + countdown.hours + ' hours ' + countdown.minutes + ' mins ' + countdown.seconds + ' secs';
+      if (countdown.days >= 0) {
+        countdownElement.innerHTML = countdown.days + ' days ' + countdown.hours + ' hours ' + countdown.minutes + ' mins ' + countdown.seconds + ' secs';
+      } else {
+        countdownElement.innerHTML = 'Countdown expired';
+      }
 
       // Update every second
       setTimeout(updateCountdown, 1000);
