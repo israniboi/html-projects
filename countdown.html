@@ -35,10 +35,10 @@
 
       // Calculate remaining time
       var timeDiff = targetDate - currentDate;
-      if (timeDiff >= 0) {
-        seconds = Math.floor(timeDiff / 1000) % 60;
-        minutes = Math.floor(timeDiff / (1000 * 60)) % 60;
-        hours = Math.floor(timeDiff / (1000 * 60 * 60)) % 24;
+      if (timeDiff > 0) {
+        seconds = Math.floor((timeDiff / 1000) % 60);
+        minutes = Math.floor((timeDiff / (1000 * 60)) % 60);
+        hours = Math.floor((timeDiff / (1000 * 60 * 60)) % 24);
         days += Math.floor(timeDiff / (1000 * 60 * 60 * 24));
       }
 
