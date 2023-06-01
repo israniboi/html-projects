@@ -16,6 +16,9 @@
         #add-btn {
             margin-left: 10px;
         }
+        .barcode {
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
@@ -33,6 +36,7 @@
         <button id="add-btn" onclick="addManualCode()">Add</button>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.0"></script>
     <script>
         let scannedCodes = [];
 
@@ -73,7 +77,12 @@
 
             for (let i = 0; i < scannedCodes.length; i++) {
                 let codeDiv = document.createElement('div');
-                codeDiv.innerText = scannedCodes[i];
+                codeDiv.className = 'barcode';
+
+                let barcodeCanvas = document.createElement('canvas');
+                JsBarcode(barcodeCanvas, scannedCodes[i], { displayValue: false });
+
+                codeDiv.appendChild(barcodeCanvas);
                 scannedCodesContainer.appendChild(codeDiv);
             }
         }
