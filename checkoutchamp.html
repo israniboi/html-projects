@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Barcode Scanner Web App</title>
+    <style>
+        #scanner-video {
+            width: 100%;
+            height: auto;
+        }
+        #scanned-codes {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Barcode Scanner Web App</h1>
+    <div id="scanner">
+        <video id="scanner-video"></video>
+    </div>
+    <div id="scanned-codes"></div>
+
+    <script>
+        let scannedCodes = [];
+
+        // Check if the browser supports getUserMedia API
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(function(stream) {
+                    let video = document.getElementById('scanner-video');
+                    video.srcObject = stream;
+                    video.play();
+
+                    // Initialize the barcode scanner
+                    let barcodeScanner = new window.Instascan.Scanner({ video: video });
+                    barcodeScanner.addListener('scan', function(content) {
+                        // Save the scanned code to the cache
+                        scannedCodes.push(content);
+                        displayScannedCodes();
+                    });
+                    window.Instascan.Camera.getCameras().then(function(cameras) {
+                        if (cameras.length > 0) {
+                            barcodeScanner.start(cameras[0]);
+                        } else {
+                            console.error('No cameras found.');
+                        }
+                    });
+                })
+                .catch(function(error) {
+                    console.error('Error accessing camera:', error);
+                });
+        } else {
+            console.error('getUserMedia is not supported by this browser.');
+        }
+
+        // Display all scanned codes in a presentation mode
+        function displayScannedCodes() {
+            let scannedCodesContainer = document.getElementById('scanned-codes');
+            scannedCodesContainer.innerHTML = '';
+
+            for (let i = 0; i < scannedCodes.length; i++) {
+                let codeDiv = document.createElement('div');
+                codeDiv.innerText = scannedCodes[i];
+                scannedCodesContainer.appendChild(codeDiv);
+            }
+        }
+    </script>
+
+    <!-- Include the Instascan library -->
+    <script src="https://cdn.jsdelivr.net/npm/instascan@1.0.1/dist/instascan.min.js"></script>
+</body>
+</html>
