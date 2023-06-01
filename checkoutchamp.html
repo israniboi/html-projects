@@ -10,6 +10,12 @@
         #scanned-codes {
             margin-top: 20px;
         }
+        #manual-input {
+            margin-top: 20px;
+        }
+        #add-btn {
+            margin-left: 10px;
+        }
     </style>
 </head>
 <body>
@@ -17,7 +23,15 @@
     <div id="scanner">
         <video id="scanner-video"></video>
     </div>
-    <div id="scanned-codes"></div>
+    <div id="scanned-codes">
+        <h2>Scanned Codes</h2>
+        <div id="codes-list"></div>
+    </div>
+    <div id="manual-input">
+        <h2>Manual Input</h2>
+        <input type="text" id="code-input" placeholder="Enter barcode data">
+        <button id="add-btn" onclick="addManualCode()">Add</button>
+    </div>
 
     <script>
         let scannedCodes = [];
@@ -52,15 +66,27 @@
             console.error('getUserMedia is not supported by this browser.');
         }
 
-        // Display all scanned codes in a presentation mode
+        // Display all scanned codes
         function displayScannedCodes() {
-            let scannedCodesContainer = document.getElementById('scanned-codes');
+            let scannedCodesContainer = document.getElementById('codes-list');
             scannedCodesContainer.innerHTML = '';
 
             for (let i = 0; i < scannedCodes.length; i++) {
                 let codeDiv = document.createElement('div');
                 codeDiv.innerText = scannedCodes[i];
                 scannedCodesContainer.appendChild(codeDiv);
+            }
+        }
+
+        // Add manually inputted code
+        function addManualCode() {
+            let manualCodeInput = document.getElementById('code-input');
+            let code = manualCodeInput.value.trim();
+
+            if (code !== '') {
+                scannedCodes.push(code);
+                displayScannedCodes();
+                manualCodeInput.value = '';
             }
         }
     </script>
