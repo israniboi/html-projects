@@ -3,104 +3,49 @@
 <head>
     <title>Barcode Scanner Web App</title>
     <style>
-        #scanner-video {
-            width: 100%;
-            height: auto;
-        }
-        #scanned-codes {
-            margin-top: 20px;
-        }
-        #manual-input {
-            margin-top: 20px;
-        }
-        #add-btn {
-            margin-left: 10px;
-        }
-        .barcode {
-            margin-bottom: 10px;
+        .presentation {
+            display: none;
         }
     </style>
 </head>
 <body>
-    <h1>Barcode Scanner Web App</h1>
-    <div id="scanner">
-        <video id="scanner-video"></video>
+    <div>
+        <button onclick="startScanning()">Start Scanning</button>
+        <button onclick="displayPresentation()">Display Presentation</button>
     </div>
-    <div id="scanned-codes">
-        <h2>Scanned Codes</h2>
-        <div id="codes-list"></div>
+    <div id="scanner" style="display: none;">
+        <input id="barcodeInput" type="text" autofocus />
     </div>
-    <div id="manual-input">
-        <h2>Manual Input</h2>
-        <input type="text" id="code-input" placeholder="Enter barcode data">
-        <button id="add-btn" onclick="addManualCode()">Add</button>
-    </div>
+    <div id="presentation" class="presentation"></div>
 
-    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.0"></script>
     <script>
-        let scannedCodes = [];
+        let barcodes = [];
 
-        // Check if the browser supports getUserMedia API
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-            navigator.mediaDevices.getUserMedia({ video: true })
-                .then(function(stream) {
-                    let video = document.getElementById('scanner-video');
-                    video.srcObject = stream;
-                    video.play();
-
-                    // Initialize the barcode scanner
-                    let barcodeScanner = new window.Instascan.Scanner({ video: video });
-                    barcodeScanner.addListener('scan', function(content) {
-                        // Save the scanned code to the cache
-                        scannedCodes.push(content);
-                        displayScannedCodes();
-                    });
-                    window.Instascan.Camera.getCameras().then(function(cameras) {
-                        if (cameras.length > 0) {
-                            barcodeScanner.start(cameras[0]);
-                        } else {
-                            console.error('No cameras found.');
-                        }
-                    });
-                })
-                .catch(function(error) {
-                    console.error('Error accessing camera:', error);
-                });
-        } else {
-            console.error('getUserMedia is not supported by this browser.');
+        function startScanning() {
+            document.getElementById('scanner').style.display = 'block';
+            document.getElementById('barcodeInput').addEventListener('keydown', handleBarcodeInput);
+            document.getElementById('barcodeInput').focus();
         }
 
-        // Display all scanned codes
-        function displayScannedCodes() {
-            let scannedCodesContainer = document.getElementById('codes-list');
-            scannedCodesContainer.innerHTML = '';
-
-            for (let i = 0; i < scannedCodes.length; i++) {
-                let codeDiv = document.createElement('div');
-                codeDiv.className = 'barcode';
-
-                let barcodeCanvas = document.createElement('canvas');
-                JsBarcode(barcodeCanvas, scannedCodes[i], { displayValue: false });
-
-                codeDiv.appendChild(barcodeCanvas);
-                scannedCodesContainer.appendChild(codeDiv);
+        function handleBarcodeInput(event) {
+            if (event.key === 'Enter') {
+                const barcode = event.target.value;
+                barcodes.push(barcode);
+                event.target.value = '';
+                event.preventDefault();
             }
         }
 
-        // Add manually inputted code
-        function addManualCode() {
-            let manualCodeInput = document.getElementById('code-input');
-            let code = manualCodeInput.value.trim();
+        function displayPresentation() {
+            document.getElementById('scanner').style.display = 'none';
+            document.getElementById('presentation').style.display = 'block';
 
-            if (code !== '') {
-                scannedCodes.push(code);
-                displayScannedCodes();
-                manualCodeInput.value = '';
+            let presentationHTML = '<h1>Scanned Barcodes</h1>';
+            for (let i = 0; i < barcodes.length; i++) {
+                presentationHTML += '<p>' + barcodes[i] + '</p>';
             }
+            document.getElementById('presentation').innerHTML = presentationHTML;
         }
     </script>
-
-    <!-- Include the Instascan library -->
-    <script src="https://cdn.jsdelivr.net/npm/instascan@1.0.1/dist/instascan.min.js"></script>
 </body>
 </html>
