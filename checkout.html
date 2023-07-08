@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Barcode Generator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    .input-container {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .input-container input[type="text"] {
+      width: 200px;
+      padding: 10px;
+      font-size: 16px;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      margin-left: 10px;
+      font-size: 16px;
+      background-color: #4CAF50;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
+
+    .barcode-list {
+      list-style-type: none;
+      padding: 0;
+    }
+
+    .barcode-list li {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .barcode-list li .barcode {
+      margin-left: 10px;
+    }
+
+    .delete-btn {
+      margin-left: 10px;
+      padding: 5px 10px;
+      background-color: #f44336;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
+
+    .clear-btn {
+      margin-top: 20px;
+      padding: 5px 10px;
+      background-color: #f44336;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>Barcode Generator</h1>
+
+  <div class="input-container">
+    <input type="text" id="barcode-input" placeholder="Enter a 13-digit number">
+    <button class="btn" onclick="addBarcode()">Add Barcode</button>
+  </div>
+
+  <ul id="barcode-list" class="barcode-list"></ul>
+
+  <button class="clear-btn" onclick="clearAll()">Clear All</button>
+
+  <script>
+    function addBarcode() {
+      var barcodeInput = document.getElementById('barcode-input');
+      var barcodeValue = barcodeInput.value.trim();
+
+      if (barcodeValue.length === 13 && !isNaN(barcodeValue)) {
+        var barcodeList = document.getElementById('barcode-list');
+
+        var listItem = document.createElement('li');
+        listItem.innerHTML = barcodeValue + '<img class="barcode" src="https://bwipjs-api.metafloor.com/?bcid=ean13&text=' + barcodeValue + '&includetext">';
+        listItem.innerHTML += '<button class="delete-btn" onclick="deleteBarcode(this)">Delete</button>';
+
+        barcodeList.appendChild(listItem);
+
+        barcodeInput.value = '';
+        saveToCookies();
+      } else {
+        alert('Please enter a valid 13-digit number');
+      }
+    }
+
+    function deleteBarcode(button) {
+      var listItem = button.parentNode;
+      listItem.parentNode.removeChild(listItem);
+      saveToCookies();
+    }
+
+    function clearAll() {
+      var barcodeList = document.getElementById('barcode-list');
+      barcodeList.innerHTML = '';
+      saveToCookies();
+    }
+
+    function saveToCookies() {
+      var barcodeList = document.getElementById('barcode-list');
+      var barcodes = [];
+
+      for (var i = 0; i < barcodeList.children.length; i++) {
+        var barcode = barcodeList.children[i].innerText.split(' ')[0];
+        barcodes.push(barcode);
+      }
+
+      document.cookie = 'barcodes=' + JSON.stringify(barcodes);
+    }
+
+    function loadFromCookies() {
+      var barcodeList = document.getElementById('barcode-list');
+      var cookies = document.cookie.split(';');
+
+      for (var i = 0; i < cookies.length; i++) {
+        var cookie = cookies[i].trim();
+        if (cookie.indexOf('barcodes=') === 0) {
+          var barcodes = JSON.parse(cookie.substring('barcodes='.length));
+
+          for (var j = 0; j < barcodes.length; j++) {
+            var barcode = barcodes[j];
+            var listItem = document.createElement('li');
+            listItem.innerHTML = barcode + '<img class="barcode" src="https://bwipjs-api.metafloor.com/?bcid=ean13&text=' + barcode + '&includetext">';
+            listItem.innerHTML += '<button class="delete-btn" onclick="deleteBarcode(this)">Delete</button>';
+
+            barcodeList.appendChild(listItem);
+          }
+        }
+      }
+    }
+
+    loadFromCookies();
+  </script>
+</body>
+</html>
