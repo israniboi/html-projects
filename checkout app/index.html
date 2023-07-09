@@ -1,1 +1,182 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Barcode Generator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f5f5f5;
+      padding: 10px;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    .container {
+      max-width: 480px;
+      margin: 0 auto;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 10px;
+    }
+
+    .form-group {
+      margin-bottom: 10px;
+    }
+
+    .form-group label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .form-group input[type="text"] {
+      width: 100%;
+      padding: 5px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    #barcode-list {
+      margin-top: 20px;
+    }
+
+    .barcode-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 5px;
+      border-bottom: 1px solid #ccc;
+    }
+
+    .barcode-item label {
+      display: flex;
+      align-items: center;
+    }
+
+    .barcode-item .delete-btn {
+      color: #ff0000;
+      cursor: pointer;
+      margin-left: 10px;
+    }
+
+    .barcode-item input[type="checkbox"] {
+      margin-right: 5px;
+    }
+
+    #delete-all {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    #delete-all button {
+      background-color: #ff0000;
+      color: #fff;
+      padding: 5px 10px;
+      border-radius: 5px;
+      border: none;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Barcode Generator</h1>
+    <div class="form-group">
+      <label for="barcode-input">Enter a 13 or 12 digit number:</label>
+      <input type="text" id="barcode-input">
+    </div>
+    <button id="add-btn">Add Barcode</button>
+    <div id="barcode-list"></div>
+    <div id="delete-all">
+      <button id="delete-all-btn">Delete All</button>
+    </div>
+  </div>
+
+  <script>
+    function generateBarcode(number) {
+      const barcodeList = document.getElementById('barcode-list');
+      const barcodeItem = document.createElement('div');
+      barcodeItem.classList.add('barcode-item');
+
+      const barcodeText = document.createElement('span');
+      barcodeText.textContent = number;
+
+      const barcodeImage = document.createElement('img');
+      barcodeImage.src = `https://barcodeapi.org/api/a/${number}`;
+
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+
+      const label = document.createElement('label');
+      label.appendChild(checkbox);
+      label.appendChild(barcodeText);
+
+      const deleteButton = document.createElement('span');
+      deleteButton.classList.add('delete-btn');
+      deleteButton.textContent = 'Delete';
+      deleteButton.addEventListener('click', function() {
+        barcodeList.removeChild(barcodeItem);
+      });
+
+      barcodeItem.appendChild(label);
+      barcodeItem.appendChild(barcodeImage);
+      barcodeItem.appendChild(deleteButton);
+
+      barcodeList.appendChild(barcodeItem);
+    }
+
+    function deleteAllBarcodes() {
+      const barcodeList = document.getElementById('barcode-list');
+      barcodeList.innerHTML = '';
+    }
+
+    function saveToCookies() {
+      const barcodeList = document.getElementById('barcode-list').innerHTML;
+      document.cookie = `barcodes=${barcodeList}; expires=Thu, 31 Dec 2037 23:59:59 UTC; path=/`;
+    }
+
+    function loadFromCookies() {
+      const barcodeList = document.getElementById('barcode-list');
+      const cookies = document.cookie.split(';');
+
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.startsWith('barcodes=')) {
+          barcodeList.innerHTML = cookie.substring(9);
+        }
+      }
+    }
+
+    function isValidNumber(number) {
+      return /^\d{12,13}$/.test(number);
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      loadFromCookies();
+    });
+
+    document.getElementById('add-btn').addEventListener('click', function() {
+      const input = document.getElementById('barcode-input');
+      const number = input.value.trim();
+
+      if (isValidNumber(number)) {
+        generateBarcode(number);
+        input.value = '';
+        saveToCookies();
+      } else {
+        alert('Please enter a valid 12 or 13 digit number.');
+      }
+    });
+
+    document.getElementById('delete-all-btn').addEventListener('click', function() {
+      deleteAllBarcodes();
+      saveToCookies();
+    });
+  </script>
+</body>
+</html>
