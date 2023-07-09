@@ -125,9 +125,17 @@
             var list = document.getElementById('numberList');
             var li = document.createElement('li');
             var span = document.createElement('span');
+            var barcodeDiv = document.createElement('div');
             var deleteButton = document.createElement('button');
 
             span.textContent = number;
+            JsBarcode(barcodeDiv, number, {
+                format: 'upc',
+                displayValue: false,
+                height: 40,
+                width: 2,
+                margin: 10
+            });
             deleteButton.textContent = 'Delete';
             deleteButton.classList.add('delete');
             deleteButton.addEventListener('click', function () {
@@ -135,10 +143,9 @@
             });
 
             li.appendChild(span);
+            li.appendChild(barcodeDiv);
             li.appendChild(deleteButton);
             list.appendChild(li);
-
-            generateBarcode(number);
         }
 
         function deleteNumber(li) {
@@ -156,19 +163,6 @@
 
             // Save the updated list to cookies
             saveListToCookies();
-        }
-
-        function generateBarcode(number) {
-            var barcodeSection = document.getElementById('barcodeSection');
-            barcodeSection.innerHTML = '';
-
-            JsBarcode(barcodeSection, number, {
-                format: 'upc',
-                displayValue: false,
-                height: 40,
-                width: 2,
-                margin: 10
-            });
         }
 
         function saveListToCookies() {
@@ -211,3 +205,4 @@
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode/dist/JsBarcode.all.min.js"></script>
 </body>
 </html>
+
