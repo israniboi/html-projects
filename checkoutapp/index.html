@@ -1,130 +1,142 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Barcode Generator</title>
   <style>
-    /* CSS styles */
     body {
       font-family: Arial, sans-serif;
       padding: 10px;
     }
+
     h1 {
       text-align: center;
     }
-    input, button {
-      margin-bottom: 10px;
-      width: 100%;
-      box-sizing: border-box;
+
+    .container {
+      max-width: 480px;
+      margin: 0 auto;
     }
-    ul {
-      list-style-type: none;
+
+    .input-group {
+      display: flex;
+      margin-bottom: 10px;
+    }
+
+    .input-group input[type="text"] {
+      flex-grow: 1;
+      padding: 5px;
+      border: 1px solid #ccc;
+    }
+
+    .input-group button {
+      padding: 5px 10px;
+      margin-left: 5px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    .barcode-list {
+      list-style: none;
       padding: 0;
     }
-    li {
+
+    .barcode-list li {
       display: flex;
-      align-items: center;
       justify-content: space-between;
+      align-items: center;
       padding: 5px;
       border-bottom: 1px solid #ccc;
     }
-    .barcode {
-      display: flex;
-      align-items: center;
+
+    .barcode-list input[type="checkbox"] {
+      margin-right: 5px;
     }
-    .barcode img {
-      height: 50px;
-      margin-left: 10px;
-    }
-    .delete {
+
+    .barcode-list button {
+      padding: 2px 5px;
+      background-color: #f44336;
+      color: white;
+      border: none;
       cursor: pointer;
-    }
-    #delete-all {
-      margin-top: 10px;
-      width: auto;
     }
   </style>
 </head>
 <body>
-  <h1>UPC-EAN Barcode Generator</h1>
-  <input id="input-number" type="text" placeholder="Enter a 12 or 13-digit number">
-  <button onclick="addItem()">Add</button>
-  <ul id="list"></ul>
-  <button id="delete-all" onclick="deleteAll()">Delete All</button>
+  <h1>Barcode Generator</h1>
+  <div class="container">
+    <div class="input-group">
+      <input type="text" id="barcodeInput" placeholder="Enter 12 or 13 digit number" />
+      <button onclick="addBarcode()">Add</button>
+    </div>
+    <ul id="barcodeList" class="barcode-list"></ul>
+    <button onclick="deleteAll()">Delete All</button>
+  </div>
 
   <script>
-    // Function to generate a UPC-EAN barcode
-    function generateBarcode(number) {
-      var barcodeURL = "https://barcode.orcascan.com/?type=upca&data=" + number;
-      return '<img src="' + barcodeURL + '">';
-    }
-
-    // Function to add an item to the list
-    function addItem() {
-      var input = document.getElementById("input-number");
-      var number = input.value.trim();
-
-      if (number.length !== 12 && number.length !== 13) {
-        alert("Please enter a 12 or 13-digit number.");
-        return;
+    // Function to generate a check digit for a 12-digit number
+    function generateCheckDigit(number) {
+      let sum = 0;
+      for (let i = 0; i < number.length; i++) {
+        let digit = parseInt(number[i]);
+        sum += i % 2 === 0 ? digit : digit * 3;
       }
-
-      var listItem = document.createElement("li");
-      var barcode = generateBarcode(number);
-
-      listItem.innerHTML = `
-        <div class="barcode">${barcode}</div>
-        <input type="checkbox" onchange="moveToBottom(this)">
-        <span>${number}</span>
-        <span class="delete" onclick="deleteItem(this)">X</span>
-      `;
-
-      document.getElementById("list").appendChild(listItem);
-      input.value = "";
-
-      saveToCookies();
+      let checkDigit = (10 - (sum % 10)) % 10;
+      return checkDigit.toString();
     }
 
-    // Function to delete an individual item
-    function deleteItem(element) {
-      var listItem = element.parentNode;
-      listItem.parentNode.removeChild(listItem);
-      saveToCookies();
-    }
+    // Function to add a barcode to the list
+    function addBarcode() {
+      const barcodeInput = document.getElementById('barcodeInput');
+      const barcodeValue = barcodeInput.value.trim();
 
-    // Function to move an item to the bottom
-    function moveToBottom(checkbox) {
-      var listItem = checkbox.parentNode;
-      if (checkbox.checked) {
-        document.getElementById("list").appendChild(listItem);
-        saveToCookies();
+      if (barcodeValue !== '') {
+        const barcodeList = document.getElementById('barcodeList');
+
+        const listItem = document.createElement('li');
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        const barcodeText = document.createElement('span');
+        barcodeText.textContent = barcodeValue;
+        const barcodeImg = document.createElement('img');
+        barcodeImg.src = `https://barcode.orcascan.com/?type=upca&data=${barcodeValue}`;
+        const deleteButton = document.createElement('button');
+        deleteButton.textContent = 'Delete';
+
+        listItem.appendChild(checkbox);
+        listItem.appendChild(barcodeText);
+        listItem.appendChild(barcodeImg);
+        listItem.appendChild(deleteButton);
+        barcodeList.appendChild(listItem);
+
+        barcodeInput.value = '';
+        barcodeInput.focus();
       }
     }
 
-    // Function to delete all items
+    // Function to delete selected barcodes
+    function deleteSelected() {
+      const checkboxes = document.querySelectorAll('#barcodeList input[type="checkbox"]:checked');
+      checkboxes.forEach(checkbox => {
+        const listItem = checkbox.parentNode;
+        listItem.parentNode.removeChild(listItem);
+      });
+    }
+
+    // Function to delete all barcodes
     function deleteAll() {
-      var list = document.getElementById("list");
-      while (list.firstChild) {
-        list.removeChild(list.firstChild);
+      const barcodeList = document.getElementById('barcodeList');
+      barcodeList.innerHTML = '';
+    }
+
+    // Event listener to handle Enter key press
+    document.getElementById('barcodeInput').addEventListener('keydown', function(event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        addBarcode();
       }
-      saveToCookies();
-    }
-
-    // Function to save the list to cookies
-    function saveToCookies() {
-      var list = document.getElementById("list").innerHTML;
-      document.cookie = "barcodeList=" + encodeURIComponent(list) + "; expires=Thu, 31 Dec 2023 23:59:59 UTC; path=/";
-    }
-
-    // Function to load the list from cookies
-    function loadFromCookies() {
-      var list = decodeURIComponent(document.cookie.replace(/(?:(?:^|.*;\s*)barcodeList\s*\=\s*([^;]*).*$)|^.*$/, "$1"));
-      if (list) {
-        document.getElementById("list").innerHTML = list;
-      }
-    }
-
-    // Load the list from cookies when the page loads
-    window.onload = loadFromCookies;
+    });
   </script>
 </body>
 </html>
