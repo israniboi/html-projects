@@ -1,178 +1,195 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Barcode Generator</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      padding: 20px;
-    }
-
-    h1 {
-      text-align: center;
-      margin-bottom: 20px;
+      background-color: #f5f5f5;
     }
 
     .container {
       max-width: 480px;
       margin: 0 auto;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     }
 
-    .input-container {
-      display: flex;
-      margin-bottom: 20px;
+    h1 {
+      text-align: center;
     }
 
-    .input-field {
-      flex-grow: 1;
-      padding: 10px;
-      border: 1px solid #ccc;
-    }
-
-    .add-button {
-      margin-left: 10px;
-      padding: 10px;
-      background-color: #4CAF50;
-      border: none;
-      color: white;
-      cursor: pointer;
-    }
-
-    .barcode-list {
-      margin-top: 20px;
-    }
-
-    .barcode-item {
-      display: flex;
-      align-items: center;
+    .input-group {
       margin-bottom: 10px;
     }
 
-    .barcode {
-      margin-left: 10px;
-      height: 50px;
+    .barcode-list {
+      list-style-type: none;
+      padding: 0;
+    }
+
+    .barcode-list-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px;
+      border-bottom: 1px solid #ccc;
+    }
+
+    .barcode-list-item:last-child {
+      border-bottom: none;
+    }
+
+    .barcode-list-item .barcode {
+      display: flex;
+      align-items: center;
+    }
+
+    .barcode-list-item .barcode img {
+      height: 40px;
+      margin-right: 10px;
     }
 
     .delete-button {
-      margin-left: 10px;
-      padding: 5px;
       background-color: #f44336;
+      color: #fff;
       border: none;
-      color: white;
+      padding: 5px 10px;
+      font-size: 14px;
+      border-radius: 3px;
       cursor: pointer;
     }
 
     .delete-all-button {
-      margin-top: 20px;
-      padding: 10px;
       background-color: #f44336;
+      color: #fff;
       border: none;
-      color: white;
+      padding: 5px 10px;
+      font-size: 14px;
+      border-radius: 3px;
       cursor: pointer;
+      margin-top: 10px;
     }
   </style>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    $(document).ready(function () {
+      // Load saved barcodes from cookies
+      loadSavedBarcodes();
+
+      // Add barcode on button click
+      $('#add-barcode').click(function () {
+        var barcode = $('#barcode-input').val();
+        if (barcode.length === 12 || barcode.length === 13) {
+          addBarcode(barcode);
+          $('#barcode-input').val('');
+        } else {
+          alert('Please enter a 12 or 13 digit number.');
+        }
+      });
+
+      // Delete barcode on button click
+      $(document).on('click', '.delete-button', function () {
+        var barcode = $(this).data('barcode');
+        removeBarcode(barcode);
+      });
+
+      // Delete all barcodes on button click
+      $('#delete-all').click(function () {
+        clearAllBarcodes();
+      });
+
+      // Move barcode to bottom on checkbox change
+      $(document).on('change', '.checkbox', function () {
+        var barcode = $(this).data('barcode');
+        if ($(this).is(':checked')) {
+          moveToBottom(barcode);
+        }
+      });
+
+      // Load saved barcodes from cookies
+      function loadSavedBarcodes() {
+        var savedBarcodes = getCookie('barcodes');
+        if (savedBarcodes !== '') {
+          var barcodes = savedBarcodes.split(',');
+          barcodes.forEach(function (barcode) {
+            addBarcode(barcode);
+          });
+        }
+      }
+
+      // Add barcode to the list
+      function addBarcode(barcode) {
+        var barcodeListItem = $('<li class="barcode-list-item"></li>');
+        var barcodeElement = $('<div class="barcode"></div>');
+        var barcodeImage = $('<img src="https://barcodeapi.org/api/a/' + barcode + '" alt="' + barcode + '"/>');
+        var deleteButton = $('<button class="delete-button" data-barcode="' + barcode + '">Delete</button>');
+
+        barcodeElement.append(barcodeImage);
+        barcodeListItem.append(barcodeElement, deleteButton);
+        $('.barcode-list').append(barcodeListItem);
+
+        // Save barcodes to cookies
+        var savedBarcodes = getCookie('barcodes');
+        if (savedBarcodes === '') {
+          setCookie('barcodes', barcode);
+        } else {
+          setCookie('barcodes', savedBarcodes + ',' + barcode);
+        }
+      }
+
+      // Remove barcode from the list
+      function removeBarcode(barcode) {
+        $('[data-barcode="' + barcode + '"]').parent().remove();
+
+        // Save updated barcodes to cookies
+        var savedBarcodes = getCookie('barcodes');
+        var updatedBarcodes = savedBarcodes.split(',').filter(function (item) {
+          return item !== barcode;
+        });
+        setCookie('barcodes', updatedBarcodes.join(','));
+      }
+
+      // Clear all barcodes from the list
+      function clearAllBarcodes() {
+        $('.barcode-list').empty();
+        setCookie('barcodes', '');
+      }
+
+      // Move barcode to the bottom of the list
+      function moveToBottom(barcode) {
+        $('[data-barcode="' + barcode + '"]').parent().appendTo('.barcode-list');
+      }
+
+      // Cookie helper functions
+      function setCookie(name, value) {
+        document.cookie = name + '=' + value + '; expires=Fri, 31 Dec 9999 23:59:59 GMT; path=/';
+      }
+
+      function getCookie(name) {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+          var cookie = cookies[i].trim();
+          if (cookie.startsWith(name + '=')) {
+            return cookie.substring(name.length + 1);
+          }
+        }
+        return '';
+      }
+    });
+  </script>
 </head>
 <body>
   <div class="container">
     <h1>Barcode Generator</h1>
-
-    <div class="input-container">
-      <input id="barcode-input" class="input-field" type="text" placeholder="Enter a 12 or 13 digit number">
-      <button id="add-button" class="add-button">Add</button>
+    <div class="input-group">
+      <input type="text" id="barcode-input" placeholder="Enter 12 or 13 digit number" />
+      <button id="add-barcode">Add</button>
     </div>
-
-    <div class="barcode-list" id="barcode-list"></div>
-
-    <button id="delete-all-button" class="delete-all-button">Delete All</button>
+    <ul class="barcode-list"></ul>
+    <button id="delete-all" class="delete-all-button">Delete All</button>
   </div>
-
-  <script>
-    // Function to generate a barcode image URL
-    function generateBarcodeURL(data) {
-      return `https://barcodeapi.org/api/13/${data}`;
-    }
-
-    // Function to create a barcode item element
-    function createBarcodeItem(data) {
-      const barcodeItem = document.createElement('div');
-      barcodeItem.className = 'barcode-item';
-
-      const barcode = document.createElement('img');
-      barcode.className = 'barcode';
-      barcode.src = generateBarcodeURL(data);
-
-      const deleteButton = document.createElement('button');
-      deleteButton.className = 'delete-button';
-      deleteButton.innerText = 'Delete';
-      deleteButton.addEventListener('click', function() {
-        barcodeItem.remove();
-        saveToCookies();
-      });
-
-      barcodeItem.appendChild(barcode);
-      barcodeItem.appendChild(deleteButton);
-
-      return barcodeItem;
-    }
-
-    // Function to add a new barcode item
-    function addBarcodeItem() {
-      const inputField = document.getElementById('barcode-input');
-      const barcodeList = document.getElementById('barcode-list');
-      const barcodeValue = inputField.value.trim();
-
-      if (barcodeValue !== '') {
-        const barcodeItem = createBarcodeItem(barcodeValue);
-        barcodeList.appendChild(barcodeItem);
-        inputField.value = '';
-        saveToCookies();
-      }
-    }
-
-    // Function to delete all barcode items
-    function deleteAllBarcodeItems() {
-      const barcodeList = document.getElementById('barcode-list');
-      barcodeList.innerHTML = '';
-      saveToCookies();
-    }
-
-    // Function to save barcode items to cookies
-    function saveToCookies() {
-      const barcodeItems = Array.from(document.getElementsByClassName('barcode-item'));
-      const barcodeData = barcodeItems.map(function(item) {
-        return item.querySelector('img').src;
-      });
-
-      document.cookie = `barcodeData=${JSON.stringify(barcodeData)}; expires=Thu, 31 Dec 2099 23:59:59 UTC; path=/`;
-    }
-
-    // Function to load barcode items from cookies
-    function loadFromCookies() {
-      const cookies = document.cookie.split(';');
-      for (const cookie of cookies) {
-        const [name, value] = cookie.trim().split('=');
-        if (name === 'barcodeData') {
-          const barcodeData = JSON.parse(value);
-          const barcodeList = document.getElementById('barcode-list');
-
-          for (const data of barcodeData) {
-            const barcodeItem = createBarcodeItem(data);
-            barcodeList.appendChild(barcodeItem);
-          }
-        }
-      }
-    }
-
-    // Event listener for the add button
-    document.getElementById('add-button').addEventListener('click', addBarcodeItem);
-
-    // Event listener for the delete all button
-    document.getElementById('delete-all-button').addEventListener('click', deleteAllBarcodeItems);
-
-    // Load barcode items from cookies when the page loads
-    window.addEventListener('load', loadFromCookies);
-  </script>
 </body>
 </html>
