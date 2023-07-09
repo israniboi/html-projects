@@ -1,131 +1,178 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Barcode Generator</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      text-align: center;
-      margin: 20px;
+      padding: 20px;
     }
-    
+
     h1 {
-      color: #333;
-    }
-    
-    .barcode {
-      margin: 10px auto;
-    }
-    
-    .list {
-      list-style: none;
-      padding: 0;
-      margin: 20px 0;
-    }
-    
-    .list-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px;
-      border-bottom: 1px solid #ddd;
-    }
-    
-    .delete {
-      color: red;
-      cursor: pointer;
-    }
-    
-    .clear {
+      text-align: center;
       margin-bottom: 20px;
     }
+
+    .container {
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    .input-container {
+      display: flex;
+      margin-bottom: 20px;
+    }
+
+    .input-field {
+      flex-grow: 1;
+      padding: 10px;
+      border: 1px solid #ccc;
+    }
+
+    .add-button {
+      margin-left: 10px;
+      padding: 10px;
+      background-color: #4CAF50;
+      border: none;
+      color: white;
+      cursor: pointer;
+    }
+
+    .barcode-list {
+      margin-top: 20px;
+    }
+
+    .barcode-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .barcode {
+      margin-left: 10px;
+      height: 50px;
+    }
+
+    .delete-button {
+      margin-left: 10px;
+      padding: 5px;
+      background-color: #f44336;
+      border: none;
+      color: white;
+      cursor: pointer;
+    }
+
+    .delete-all-button {
+      margin-top: 20px;
+      padding: 10px;
+      background-color: #f44336;
+      border: none;
+      color: white;
+      cursor: pointer;
+    }
   </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Barcode Generator</h1>
+
+    <div class="input-container">
+      <input id="barcode-input" class="input-field" type="text" placeholder="Enter a 12 or 13 digit number">
+      <button id="add-button" class="add-button">Add</button>
+    </div>
+
+    <div class="barcode-list" id="barcode-list"></div>
+
+    <button id="delete-all-button" class="delete-all-button">Delete All</button>
+  </div>
+
   <script>
-    // Function to generate a barcode image
-    function generateBarcode(data) {
-      const barcodeContainer = document.getElementById('barcode-container');
-      const barcodeURL = `https://barcodeapi.org/api/13/${data}`;
-      barcodeContainer.innerHTML = `<img src="${barcodeURL}" alt="Barcode" class="barcode">`;
+    // Function to generate a barcode image URL
+    function generateBarcodeURL(data) {
+      return `https://barcodeapi.org/api/13/${data}`;
     }
 
-    // Function to add a new item to the list and generate a barcode
-    function addItem() {
-      const input = document.getElementById('input');
-      const data = input.value;
-      if (data.length === 13) {
-        const listItem = document.createElement('li');
-        listItem.className = 'list-item';
-        listItem.innerHTML = `
-          <span>${data}</span>
-          <span class="delete" onclick="deleteItem(this)">Delete</span>
-        `;
-        document.getElementById('list').appendChild(listItem);
-        generateBarcode(data);
+    // Function to create a barcode item element
+    function createBarcodeItem(data) {
+      const barcodeItem = document.createElement('div');
+      barcodeItem.className = 'barcode-item';
+
+      const barcode = document.createElement('img');
+      barcode.className = 'barcode';
+      barcode.src = generateBarcodeURL(data);
+
+      const deleteButton = document.createElement('button');
+      deleteButton.className = 'delete-button';
+      deleteButton.innerText = 'Delete';
+      deleteButton.addEventListener('click', function() {
+        barcodeItem.remove();
         saveToCookies();
-        input.value = '';
-      } else {
-        alert('Please enter a valid 13-digit number.');
+      });
+
+      barcodeItem.appendChild(barcode);
+      barcodeItem.appendChild(deleteButton);
+
+      return barcodeItem;
+    }
+
+    // Function to add a new barcode item
+    function addBarcodeItem() {
+      const inputField = document.getElementById('barcode-input');
+      const barcodeList = document.getElementById('barcode-list');
+      const barcodeValue = inputField.value.trim();
+
+      if (barcodeValue !== '') {
+        const barcodeItem = createBarcodeItem(barcodeValue);
+        barcodeList.appendChild(barcodeItem);
+        inputField.value = '';
+        saveToCookies();
       }
     }
 
-    // Function to delete an item from the list
-    function deleteItem(element) {
-      const listItem = element.parentNode;
-      listItem.parentNode.removeChild(listItem);
+    // Function to delete all barcode items
+    function deleteAllBarcodeItems() {
+      const barcodeList = document.getElementById('barcode-list');
+      barcodeList.innerHTML = '';
       saveToCookies();
     }
 
-    // Function to clear the list and delete all items
-    function clearList() {
-      const list = document.getElementById('list');
-      while (list.firstChild) {
-        list.firstChild.remove();
-      }
-      saveToCookies();
-    }
-
-    // Function to save the list to cookies
+    // Function to save barcode items to cookies
     function saveToCookies() {
-      const list = document.getElementById('list');
-      const items = [];
-      for (let i = 0; i < list.children.length; i++) {
-        items.push(list.children[i].querySelector('span:first-child').innerText);
-      }
-      document.cookie = `barcodeList=${JSON.stringify(items)}`;
+      const barcodeItems = Array.from(document.getElementsByClassName('barcode-item'));
+      const barcodeData = barcodeItems.map(function(item) {
+        return item.querySelector('img').src;
+      });
+
+      document.cookie = `barcodeData=${JSON.stringify(barcodeData)}; expires=Thu, 31 Dec 2099 23:59:59 UTC; path=/`;
     }
 
-    // Function to load the list from cookies
+    // Function to load barcode items from cookies
     function loadFromCookies() {
       const cookies = document.cookie.split(';');
-      for (let i = 0; i < cookies.length; i++) {
-        const cookie = cookies[i].trim();
-        if (cookie.startsWith('barcodeList=')) {
-          const items = JSON.parse(cookie.substring('barcodeList='.length));
-          for (let j = 0; j < items.length; j++) {
-            const listItem = document.createElement('li');
-            listItem.className = 'list-item';
-            listItem.innerHTML = `
-              <span>${items[j]}</span>
-              <span class="delete" onclick="deleteItem(this)">Delete</span>
-            `;
-            document.getElementById('list').appendChild(listItem);
-            generateBarcode(items[j]);
+      for (const cookie of cookies) {
+        const [name, value] = cookie.trim().split('=');
+        if (name === 'barcodeData') {
+          const barcodeData = JSON.parse(value);
+          const barcodeList = document.getElementById('barcode-list');
+
+          for (const data of barcodeData) {
+            const barcodeItem = createBarcodeItem(data);
+            barcodeList.appendChild(barcodeItem);
           }
         }
       }
     }
 
-    // Load the list from cookies on page load
-    window.onload = loadFromCookies;
+    // Event listener for the add button
+    document.getElementById('add-button').addEventListener('click', addBarcodeItem);
+
+    // Event listener for the delete all button
+    document.getElementById('delete-all-button').addEventListener('click', deleteAllBarcodeItems);
+
+    // Load barcode items from cookies when the page loads
+    window.addEventListener('load', loadFromCookies);
   </script>
-</head>
-<body>
-  <h1>Barcode Generator</h1>
-  <input type="text" id="input" placeholder="Enter a 13-digit number">
-  <button onclick="addItem()">Add to List</button>
-  <div id="barcode-container"></div>
-  <ul id="list" class="list"></ul>
-  <button class="clear" onclick="clearList()">Clear List</button>
 </body>
 </html>
-
