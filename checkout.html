@@ -1,154 +1,213 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>Barcode Generator</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 20px;
-    }
+    <title>Barcode Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 10px;
+            background-color: #f1f1f1;
+        }
 
-    h1 {
-      text-align: center;
-    }
+        h1 {
+            text-align: center;
+        }
 
-    .input-container {
-      display: flex;
-      justify-content: center;
-      margin-bottom: 20px;
-    }
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            background-color: #fff;
+            border-radius: 5px;
+            padding: 20px;
+        }
 
-    .input-container input[type="text"] {
-      width: 200px;
-      padding: 10px;
-      font-size: 16px;
-    }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
 
-    .btn {
-      padding: 10px 20px;
-      margin-left: 10px;
-      font-size: 16px;
-      background-color: #4CAF50;
-      color: #fff;
-      border: none;
-      cursor: pointer;
-    }
+        button {
+            background-color: #4CAF50;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
 
-    .barcode-list {
-      list-style-type: none;
-      padding: 0;
-    }
+        button:hover {
+            background-color: #45a049;
+        }
 
-    .barcode-list li {
-      display: flex;
-      align-items: center;
-      margin-bottom: 10px;
-    }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
 
-    .barcode-list li .barcode {
-      margin-left: 10px;
-    }
+        li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #ddd;
+            padding: 10px 0;
+        }
 
-    .delete-btn {
-      margin-left: 10px;
-      padding: 5px 10px;
-      background-color: #f44336;
-      color: #fff;
-      border: none;
-      cursor: pointer;
-    }
+        .barcode {
+            margin-top: 20px;
+        }
 
-    .clear-btn {
-      margin-top: 20px;
-      padding: 5px 10px;
-      background-color: #f44336;
-      color: #fff;
-      border: none;
-      cursor: pointer;
-    }
-  </style>
+        .delete {
+            background-color: #f44336;
+        }
+
+        .delete:hover {
+            background-color: #d32f2f;
+        }
+
+        .delete-all {
+            background-color: #f44336;
+            margin-top: 20px;
+        }
+
+        .delete-all:hover {
+            background-color: #d32f2f;
+        }
+    </style>
 </head>
 <body>
-  <h1>Barcode Generator</h1>
+    <h1>Barcode Generator</h1>
+    <div class="container">
+        <input type="text" id="numberInput" placeholder="Enter a 13-digit number">
+        <button onclick="addNumber()">Add</button>
 
-  <div class="input-container">
-    <input type="text" id="barcode-input" placeholder="Enter a 13-digit number">
-    <button class="btn" onclick="addBarcode()">Add Barcode</button>
-  </div>
+        <ul id="numberList"></ul>
 
-  <ul id="barcode-list" class="barcode-list"></ul>
+        <div class="barcode" id="barcodeSection"></div>
 
-  <button class="clear-btn" onclick="clearAll()">Clear All</button>
+        <button class="delete-all" onclick="deleteAll()">Delete All</button>
+    </div>
 
-  <script>
-    function addBarcode() {
-      var barcodeInput = document.getElementById('barcode-input');
-      var barcodeValue = barcodeInput.value.trim();
+    <script>
+        // Check if there are any saved numbers in cookies
+        window.addEventListener('DOMContentLoaded', function () {
+            var savedNumbers = getCookie('numbers');
+            if (savedNumbers) {
+                var numbers = savedNumbers.split(',');
+                numbers.forEach(function (number) {
+                    addNumberToList(number);
+                });
+            }
+        });
 
-      if (barcodeValue.length === 13 && !isNaN(barcodeValue)) {
-        var barcodeList = document.getElementById('barcode-list');
+        function addNumber() {
+            var input = document.getElementById('numberInput');
+            var number = input.value.trim();
 
-        var listItem = document.createElement('li');
-        listItem.innerHTML = barcodeValue + '<img class="barcode" src="https://bwipjs-api.metafloor.com/?bcid=ean13&text=' + barcodeValue + '&includetext">';
-        listItem.innerHTML += '<button class="delete-btn" onclick="deleteBarcode(this)">Delete</button>';
+            if (number.length !== 13 || isNaN(number)) {
+                alert('Please enter a valid 13-digit number.');
+                return;
+            }
 
-        barcodeList.appendChild(listItem);
+            addNumberToList(number);
+            input.value = '';
 
-        barcodeInput.value = '';
-        saveToCookies();
-      } else {
-        alert('Please enter a valid 13-digit number');
-      }
-    }
-
-    function deleteBarcode(button) {
-      var listItem = button.parentNode;
-      listItem.parentNode.removeChild(listItem);
-      saveToCookies();
-    }
-
-    function clearAll() {
-      var barcodeList = document.getElementById('barcode-list');
-      barcodeList.innerHTML = '';
-      saveToCookies();
-    }
-
-    function saveToCookies() {
-      var barcodeList = document.getElementById('barcode-list');
-      var barcodes = [];
-
-      for (var i = 0; i < barcodeList.children.length; i++) {
-        var barcode = barcodeList.children[i].innerText.split(' ')[0];
-        barcodes.push(barcode);
-      }
-
-      document.cookie = 'barcodes=' + JSON.stringify(barcodes);
-    }
-
-    function loadFromCookies() {
-      var barcodeList = document.getElementById('barcode-list');
-      var cookies = document.cookie.split(';');
-
-      for (var i = 0; i < cookies.length; i++) {
-        var cookie = cookies[i].trim();
-        if (cookie.indexOf('barcodes=') === 0) {
-          var barcodes = JSON.parse(cookie.substring('barcodes='.length));
-
-          for (var j = 0; j < barcodes.length; j++) {
-            var barcode = barcodes[j];
-            var listItem = document.createElement('li');
-            listItem.innerHTML = barcode + '<img class="barcode" src="https://bwipjs-api.metafloor.com/?bcid=ean13&text=' + barcode + '&includetext">';
-            listItem.innerHTML += '<button class="delete-btn" onclick="deleteBarcode(this)">Delete</button>';
-
-            barcodeList.appendChild(listItem);
-          }
+            // Save the updated list to cookies
+            saveListToCookies();
         }
-      }
-    }
 
-    loadFromCookies();
-  </script>
+        function addNumberToList(number) {
+            var list = document.getElementById('numberList');
+            var li = document.createElement('li');
+            var span = document.createElement('span');
+            var deleteButton = document.createElement('button');
+
+            span.textContent = number;
+            deleteButton.textContent = 'Delete';
+            deleteButton.classList.add('delete');
+            deleteButton.addEventListener('click', function () {
+                deleteNumber(this.parentNode);
+            });
+
+            li.appendChild(span);
+            li.appendChild(deleteButton);
+            list.appendChild(li);
+
+            generateBarcode(number);
+        }
+
+        function deleteNumber(li) {
+            li.remove();
+
+            // Save the updated list to cookies
+            saveListToCookies();
+        }
+
+        function deleteAll() {
+            var list = document.getElementById('numberList');
+            while (list.firstChild) {
+                list.removeChild(list.firstChild);
+            }
+
+            // Save the updated list to cookies
+            saveListToCookies();
+        }
+
+        function generateBarcode(number) {
+            var barcodeSection = document.getElementById('barcodeSection');
+            barcodeSection.innerHTML = '';
+
+            JsBarcode(barcodeSection, number, {
+                format: 'upc',
+                displayValue: false,
+                height: 40,
+                width: 2,
+                margin: 10
+            });
+        }
+
+        function saveListToCookies() {
+            var list = document.getElementById('numberList');
+            var numbers = [];
+            for (var i = 0; i < list.children.length; i++) {
+                var number = list.children[i].firstChild.textContent;
+                numbers.push(number);
+            }
+
+            setCookie('numbers', numbers.join(','), 30);
+        }
+
+        // Cookie utility functions
+        function setCookie(name, value, days) {
+            var expires = '';
+            if (days) {
+                var date = new Date();
+                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                expires = '; expires=' + date.toUTCString();
+            }
+            document.cookie = name + '=' + (value || '') + expires + '; path=/';
+        }
+
+        function getCookie(name) {
+            var nameEQ = name + '=';
+            var ca = document.cookie.split(';');
+            for (var i = 0; i < ca.length; i++) {
+                var c = ca[i];
+                while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+            }
+            return null;
+        }
+
+        function eraseCookie(name) {
+            document.cookie = name + '=; Max-Age=-99999999;';
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode/dist/JsBarcode.all.min.js"></script>
 </body>
 </html>
