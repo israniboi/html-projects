@@ -1,208 +1,131 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Barcode Generator</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 10px;
-            background-color: #f1f1f1;
-        }
+  <title>Barcode Generator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 20px;
+    }
+    
+    h1 {
+      color: #333;
+    }
+    
+    .barcode {
+      margin: 10px auto;
+    }
+    
+    .list {
+      list-style: none;
+      padding: 0;
+      margin: 20px 0;
+    }
+    
+    .list-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      border-bottom: 1px solid #ddd;
+    }
+    
+    .delete {
+      color: red;
+      cursor: pointer;
+    }
+    
+    .clear {
+      margin-bottom: 20px;
+    }
+  </style>
+  <script>
+    // Function to generate a barcode image
+    function generateBarcode(data) {
+      const barcodeContainer = document.getElementById('barcode-container');
+      const barcodeURL = `https://barcodeapi.org/api/13/${data}`;
+      barcodeContainer.innerHTML = `<img src="${barcodeURL}" alt="Barcode" class="barcode">`;
+    }
 
-        h1 {
-            text-align: center;
-        }
+    // Function to add a new item to the list and generate a barcode
+    function addItem() {
+      const input = document.getElementById('input');
+      const data = input.value;
+      if (data.length === 13) {
+        const listItem = document.createElement('li');
+        listItem.className = 'list-item';
+        listItem.innerHTML = `
+          <span>${data}</span>
+          <span class="delete" onclick="deleteItem(this)">Delete</span>
+        `;
+        document.getElementById('list').appendChild(listItem);
+        generateBarcode(data);
+        saveToCookies();
+        input.value = '';
+      } else {
+        alert('Please enter a valid 13-digit number.');
+      }
+    }
 
-        .container {
-            max-width: 480px;
-            margin: 0 auto;
-            background-color: #fff;
-            border-radius: 5px;
-            padding: 20px;
-        }
+    // Function to delete an item from the list
+    function deleteItem(element) {
+      const listItem = element.parentNode;
+      listItem.parentNode.removeChild(listItem);
+      saveToCookies();
+    }
 
-        input[type="text"] {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 10px;
-            box-sizing: border-box;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 16px;
-        }
+    // Function to clear the list and delete all items
+    function clearList() {
+      const list = document.getElementById('list');
+      while (list.firstChild) {
+        list.firstChild.remove();
+      }
+      saveToCookies();
+    }
 
-        button {
-            background-color: #4CAF50;
-            color: #fff;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
+    // Function to save the list to cookies
+    function saveToCookies() {
+      const list = document.getElementById('list');
+      const items = [];
+      for (let i = 0; i < list.children.length; i++) {
+        items.push(list.children[i].querySelector('span:first-child').innerText);
+      }
+      document.cookie = `barcodeList=${JSON.stringify(items)}`;
+    }
 
-        button:hover {
-            background-color: #45a049;
+    // Function to load the list from cookies
+    function loadFromCookies() {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.startsWith('barcodeList=')) {
+          const items = JSON.parse(cookie.substring('barcodeList='.length));
+          for (let j = 0; j < items.length; j++) {
+            const listItem = document.createElement('li');
+            listItem.className = 'list-item';
+            listItem.innerHTML = `
+              <span>${items[j]}</span>
+              <span class="delete" onclick="deleteItem(this)">Delete</span>
+            `;
+            document.getElementById('list').appendChild(listItem);
+            generateBarcode(items[j]);
+          }
         }
+      }
+    }
 
-        ul {
-            list-style-type: none;
-            padding: 0;
-        }
-
-        li {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #ddd;
-            padding: 10px 0;
-        }
-
-        .barcode {
-            margin-top: 20px;
-        }
-
-        .delete {
-            background-color: #f44336;
-        }
-
-        .delete:hover {
-            background-color: #d32f2f;
-        }
-
-        .delete-all {
-            background-color: #f44336;
-            margin-top: 20px;
-        }
-
-        .delete-all:hover {
-            background-color: #d32f2f;
-        }
-    </style>
+    // Load the list from cookies on page load
+    window.onload = loadFromCookies;
+  </script>
 </head>
 <body>
-    <h1>Barcode Generator</h1>
-    <div class="container">
-        <input type="text" id="numberInput" placeholder="Enter a 13-digit number">
-        <button onclick="addNumber()">Add</button>
-
-        <ul id="numberList"></ul>
-
-        <div class="barcode" id="barcodeSection"></div>
-
-        <button class="delete-all" onclick="deleteAll()">Delete All</button>
-    </div>
-
-    <script>
-        // Check if there are any saved numbers in cookies
-        window.addEventListener('DOMContentLoaded', function () {
-            var savedNumbers = getCookie('numbers');
-            if (savedNumbers) {
-                var numbers = savedNumbers.split(',');
-                numbers.forEach(function (number) {
-                    addNumberToList(number);
-                });
-            }
-        });
-
-        function addNumber() {
-            var input = document.getElementById('numberInput');
-            var number = input.value.trim();
-
-            if (number.length !== 13 || isNaN(number)) {
-                alert('Please enter a valid 13-digit number.');
-                return;
-            }
-
-            addNumberToList(number);
-            input.value = '';
-
-            // Save the updated list to cookies
-            saveListToCookies();
-        }
-
-        function addNumberToList(number) {
-            var list = document.getElementById('numberList');
-            var li = document.createElement('li');
-            var span = document.createElement('span');
-            var barcodeDiv = document.createElement('div');
-            var deleteButton = document.createElement('button');
-
-            span.textContent = number;
-            JsBarcode(barcodeDiv, number, {
-                format: 'upc',
-                displayValue: false,
-                height: 40,
-                width: 2,
-                margin: 10
-            });
-            deleteButton.textContent = 'Delete';
-            deleteButton.classList.add('delete');
-            deleteButton.addEventListener('click', function () {
-                deleteNumber(this.parentNode);
-            });
-
-            li.appendChild(span);
-            li.appendChild(barcodeDiv);
-            li.appendChild(deleteButton);
-            list.appendChild(li);
-        }
-
-        function deleteNumber(li) {
-            li.remove();
-
-            // Save the updated list to cookies
-            saveListToCookies();
-        }
-
-        function deleteAll() {
-            var list = document.getElementById('numberList');
-            while (list.firstChild) {
-                list.removeChild(list.firstChild);
-            }
-
-            // Save the updated list to cookies
-            saveListToCookies();
-        }
-
-        function saveListToCookies() {
-            var list = document.getElementById('numberList');
-            var numbers = [];
-            for (var i = 0; i < list.children.length; i++) {
-                var number = list.children[i].firstChild.textContent;
-                numbers.push(number);
-            }
-
-            setCookie('numbers', numbers.join(','), 30);
-        }
-
-        // Cookie utility functions
-        function setCookie(name, value, days) {
-            var expires = '';
-            if (days) {
-                var date = new Date();
-                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-                expires = '; expires=' + date.toUTCString();
-            }
-            document.cookie = name + '=' + (value || '') + expires + '; path=/';
-        }
-
-        function getCookie(name) {
-            var nameEQ = name + '=';
-            var ca = document.cookie.split(';');
-            for (var i = 0; i < ca.length; i++) {
-                var c = ca[i];
-                while (c.charAt(0) === ' ') c = c.substring(1, c.length);
-                if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
-            }
-            return null;
-        }
-
-        function eraseCookie(name) {
-            document.cookie = name + '=; Max-Age=-99999999;';
-        }
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/jsbarcode/dist/JsBarcode.all.min.js"></script>
+  <h1>Barcode Generator</h1>
+  <input type="text" id="input" placeholder="Enter a 13-digit number">
+  <button onclick="addItem()">Add to List</button>
+  <div id="barcode-container"></div>
+  <ul id="list" class="list"></ul>
+  <button class="clear" onclick="clearList()">Clear List</button>
 </body>
 </html>
 
